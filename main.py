@@ -14,11 +14,11 @@ while True:
     chance_de_entrada = random.randint(1, 100)
 
     if chance_de_entrada > 97:  # Simula entrada aleatória
-        log("🔔 SINAL DETECTADO: Condição de entrada confirmada.")
-        log("🚀 Ordem de COMPRA executada com sucesso. Aguardando evolução da operação...")
+        log(" SINAL DETECTADO: Condição de entrada confirmada.")
+        log(" Ordem de COMPRA executada com sucesso. Aguardando evolução da operação...")
         break
 
-    log("📉 Nenhuma entrada detectada. Aguardando novo sinal...")
+    log(" Nenhuma entrada detectada. Aguardando novo sinal...")
     time.sleep(10)
 [14:31, 07/07/2025] Felipe Weissmann: import os
 import time
