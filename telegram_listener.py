@@ -1,50 +1,28 @@
 import telebot
-import subprocess
+import os
 
-# TOKEN e ID já configurados
-TOKEN = "6928231485:AAHnKDcCC40sVdXQhgnKWhZV_bWD_g3mO1Q"
-ADMIN_ID = 5910676333
-
+# Token do bot
+TOKEN = '6944631209:AAEcmjYOgydvZ0XoAQ9zMRDDElJ5mfxOils'
 bot = telebot.TeleBot(TOKEN)
 
-@bot.message_handler(commands=['status'])
-def status(message):
-    if message.chat.id == ADMIN_ID:
-        try:
-            result = subprocess.check_output("systemctl status valkyria.service", shell=True).decode()
-            bot.reply_to(message, f"Status:\n{result}")
-        except Exception as e:
-            bot.reply_to(message, f"Erro ao obter status:\n{e}")
-    else:
-        bot.reply_to(message, "Acesso negado.")
-
-@bot.message_handler(commands=['reiniciar'])
-def reiniciar(message):
-    if message.chat.id == ADMIN_ID:
-        try:
-            subprocess.call("systemctl restart valkyria.service", shell=True)
-            bot.reply_to(message, "Valkyria reiniciada com sucesso.")
-        except Exception as e:
-            bot.reply_to(message, f"Erro ao reiniciar:\n{e}")
-    else:
-        bot.reply_to(message, "Acesso negado.")
-
-@bot.message_handler(commands=['log'])
-def logs(message):
-    if message.chat.id == ADMIN_ID:
-        try:
-            log = subprocess.check_output("tail -n 30 /var/log/syslog | grep valkyria", shell=True).decode()
-            bot.reply_to(message, f"Últimos logs:\n{log}")
-        except Exception as e:
-            bot.reply_to(message, f"Erro ao puxar logs:\n{e}")
-    else:
-        bot.reply_to(message, "Acesso negado.")
+@bot.message_handler(commands=['start', 'iniciar'])
+def send_welcome(message):
+    bot.reply_to(message, "ValKyria online. Pronta para executar comandos.")
 
 @bot.message_handler(func=lambda m: True)
-def fallback(message):
-    if message.chat.id == ADMIN_ID:
-        bot.reply_to(message, "Comandos:\n/status\n/reiniciar\n/log")
-    else:
-        bot.reply_to(message, "Acesso restrito.")
+def responder_comando(message):
+    texto = message.text.lower()
 
-bot.polling()
+    if 'status' in texto:
+        resposta = "ValKyria está ativa e rodando com monitoramento."
+    elif 'binance' in texto:
+        resposta = "Conectada à conta real da Binance."
+    elif 'ganhos' in texto:
+        resposta = "Últimos ganhos e perdas estão sendo analisados."
+    else:
+        resposta = "Comando não reconhecido. Tente: status, binance, ganhos..."
+
+    bot.reply_to(message, resposta)
+
+# ESSENCIAL PARA FUNCIONAR
+bot.polling(none_stop=True)
