@@ -1,40 +1,50 @@
-import time
-import requests
-import json
-from datetime import datetime
-from valkyriabot import interpretar_mensagem
-from inteligencia import carregar_memoria
+import telebot
+import subprocess
 
-TOKEN = "7791777972:AAG1TBho1bSMEKGBncWz3q7a5vHBvRlGjfl"
-ID_USUARIO_AUTORIZADO = 1319982843
-URL = f"https://api.telegram.org/bot{TOKEN}/"
+# TOKEN e ID já configurados
+TOKEN = "6928231485:AAHnKDcCC40sVdXQhgnKWhZV_bWD_g3mO1Q"
+ADMIN_ID = 5910676333
 
-def enviar_mensagem(texto):
-    requests.post(URL + "sendMessage", json={"chat_id": ID_USUARIO_AUTORIZADO, "text": texto})
+bot = telebot.TeleBot(TOKEN)
 
-def obter_atualizacoes(offset=None):
-    params = {"timeout": 100, "offset": offset}
-    resp = requests.get(URL + "getUpdates", params=params)
-    return resp.json()
+@bot.message_handler(commands=['status'])
+def status(message):
+    if message.chat.id == ADMIN_ID:
+        try:
+            result = subprocess.check_output("systemctl status valkyria.service", shell=True).decode()
+            bot.reply_to(message, f"Status:\n{result}")
+        except Exception as e:
+            bot.reply_to(message, f"Erro ao obter status:\n{e}")
+    else:
+        bot.reply_to(message, "Acesso negado.")
 
-def main():
-    memoria = carregar_memoria()
-    ultimo_update_id = None
+@bot.message_handler(commands=['reiniciar'])
+def reiniciar(message):
+    if message.chat.id == ADMIN_ID:
+        try:
+            subprocess.call("systemctl restart valkyria.service", shell=True)
+            bot.reply_to(message, "Valkyria reiniciada com sucesso.")
+        except Exception as e:
+            bot.reply_to(message, f"Erro ao reiniciar:\n{e}")
+    else:
+        bot.reply_to(message, "Acesso negado.")
 
-    while True:
-        atualizacoes = obter_atualizacoes(ultimo_update_id)
-        for resultado in atualizacoes.get("result", []):
-            mensagem = resultado["message"]
-            chat_id = mensagem["chat"]["id"]
-            texto = mensagem.get("text", "")
-            update_id = resultado["update_id"]
+@bot.message_handler(commands=['log'])
+def logs(message):
+    if message.chat.id == ADMIN_ID:
+        try:
+            log = subprocess.check_output("tail -n 30 /var/log/syslog | grep valkyria", shell=True).decode()
+            bot.reply_to(message, f"Últimos logs:\n{log}")
+        except Exception as e:
+            bot.reply_to(message, f"Erro ao puxar logs:\n{e}")
+    else:
+        bot.reply_to(message, "Acesso negado.")
 
-            if chat_id == ID_USUARIO_AUTORIZADO and texto:
-                resposta = interpretar_mensagem(texto, memoria)
-                enviar_mensagem(resposta)
-            
-            ultimo_update_id = update_id + 1
-        time.sleep(2)
+@bot.message_handler(func=lambda m: True)
+def fallback(message):
+    if message.chat.id == ADMIN_ID:
+        bot.reply_to(message, "Comandos:\n/status\n/reiniciar\n/log")
+    else:
+        bot.reply_to(message, "Acesso restrito.")
 
-if _name_ == "_main_":
-    main()
+bot.polling()
