@@ -1,5 +1,5 @@
-requests
-websocket-client
+ccxt
 pandas
 numpy
-python-binance
+ta
+TA-Lib
