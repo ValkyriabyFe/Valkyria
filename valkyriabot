@@ -1,0 +1,100 @@
+import time
+import requests 
+import json 
+from datetime import datetime
+
+=== CONFIGURAÇÕES DO BOT ===
+
+TOKEN = '7791777972:AAG1TBho1bSMEKGBncWz3q7a5vHBvRlGjfI' ID_USUARIO_AUTORIZADO = 1319982843 URL_BASE = f'https://api.telegram.org/bot{TOKEN}'
+
+=== CARREGAR HISTÓRICO ===
+
+def carregar_memoria(): try: with open("valkyria_memory.json", "r") as f: return json.load(f) except: return []
+
+=== INTERPRETAÇÃO INTELIGENTE ===
+
+def interpretar_mensagem(texto, memoria): texto = texto.lower()
+
+if 'como foi a operação' in texto or 'resultado do trade' in texto:
+    if memoria:
+        ultima = memoria[-1]
+        return (
+            f"Ultimo trade:\n"
+            f"Par: {ultima['symbol']}\n"
+            f"Padrao: {ultima.get('pattern', 'N/A')}\n"
+            f"Entrada: {ultima['entry']} | Saida: {ultima['exit']}\n"
+            f"Resultado: {ultima['result'].upper()}"
+        )
+    else:
+        return 'Nenhuma operacao registrada ainda.'
+
+elif 'por que' in texto or 'deu errado' in texto:
+    if memoria:
+        ultima = memoria[-1]
+        padrao = ultima.get('pattern', 'nao identificado')
+        return (
+            f"Analise do ultimo erro:\n"
+            f"Possivel falha no padrao '{padrao}'.\n"
+            f"Pode ter havido baixa no volume ou rompimento falso.\n"
+            f"Recomendo revisar a tendencia anterior e o volume no momento da entrada."
+        )
+    else:
+        return 'Ainda nao houve operacoes para analisar.'
+
+elif 'qual padrão' in texto:
+    if memoria:
+        ultima = memoria[-1]
+        return f"Padrao da ultima operacao: {ultima.get('pattern', 'Nao identificado')}"
+    else:
+        return 'Nenhum padrao registrado ainda.'
+
+elif 'me ensina' in texto or 'o que é' in texto:
+    if 'rsi' in texto:
+        return 'RSI (Indice de Forca Relativa) e um indicador que mede a velocidade e mudanca dos movimentos de preco. Valores acima de 70 indicam sobrecompra, abaixo de 30 indicam sobrevenda.'
+    elif 'macd' in texto:
+        return 'MACD e um indicador que mostra a relacao entre duas medias moveis. Cruzes entre a linha MACD e a linha de sinal geram sinais de compra ou venda.'
+    elif 'pullback' in texto:
+        return 'Pullback e um recuo temporario no preco antes de continuar a tendencia anterior. Pode ser uma boa entrada apos rompimento.'
+    else:
+        return 'Ainda nao tenho esse conteudo salvo, mas em breve vou aprender.'
+
+elif 'expectativa' in texto or 'hoje' in texto:
+    agora = datetime.utcnow()
+    hora = agora.hour
+    if 12 <= hora <= 17:
+        return 'Estamos no horario de maior volume global. A IA esta atenta para oportunidades com maior assertividade.'
+    else:
+        return 'Volume abaixo do ideal. A IA esta aguardando confirmacao antes de entrar.'
+
+else:
+    return 'Desculpe, ainda nao entendi essa pergunta. Tente algo como:\n- "Como foi a operacao?"\n- "Qual padrao foi usado?"\n- "Me ensina RSI"\n- "O que e pullback?"'
+
+=== ENVIAR MENSAGEM ===
+
+def enviar_mensagem(mensagem, chat_id): requests.post(f'{URL_BASE}/sendMessage', data={'chat_id': chat_id, 'text': mensagem})
+
+=== LOOP DE ESCUTA ===
+
+print("ValKyria Telegram ativa e ouvindo...") ultima_update = None
+
+while True: try: resposta = requests.get(f'{URL_BASE}/getUpdates').json() mensagens = resposta['result']
+
+if mensagens:
+        ultima = mensagens[-1]
+        update_id = ultima['update_id']
+
+        if update_id != ultima_update:
+            mensagem_texto = ultima['message'].get('text', '')
+            chat_id = ultima['message']['chat']['id']
+
+            if chat_id == ID_USUARIO_AUTORIZADO:
+                memoria = carregar_memoria()
+                resposta_texto = interpretar_mensagem(mensagem_texto, memoria)
+                enviar_mensagem(resposta_texto, chat_id)
+
+            ultima_update = update_id
+
+except Exception as e:
+    print('Erro:', e)
+
+time.sleep(3)
