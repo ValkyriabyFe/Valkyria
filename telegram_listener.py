@@ -1,8 +1,8 @@
 import telebot
-import sistema_operacional
+import os
 
-# Token do bot atualizado
-FICHA = '7791777972:AAG1TBho1bSMEKGBncWz3q7a5vHBvRlGjfI'
+# Token do bot
+FICHA = '7791777972:AAG1TBho1bSMEKGBncWz3q7a5vHBvRlGjfl'
 robô = telebot.TeleBot(FICHA)
 
 @robô.message_handler(commands=['começar', 'iniciar'])
@@ -20,7 +20,7 @@ def responder_comando(mensagem):
     elif 'ganhos' in texto:
         resposta = "Últimos ganhos e perdas estão sendo analisados."
     else:
-        resposta = "Comando não reconhecido. Tente: status, binance, ganhos..."
+        resposta = "Comando não reconhecido. Envie: status, binance, ganhos..."
 
     robô.send_message(mensagem.chat.id, resposta)
 
